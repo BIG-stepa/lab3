@@ -16,21 +16,21 @@ let rec checkInt (prompt: string) =
         printfn "Введите целое число."
         checkInt prompt
 
-// Добавление символа к каждой строке
+// добавление символа к каждой строке
 let addCharToSeq (charToAdd: char) (strings: string list) =
     strings |> List.map (fun str -> str + string charToAdd)
 
-// Генерация случайной строки
+// случайная строка
 let generateRandomString (length: int) =
     let random = Random()
     let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+:'№,.;<>{}|/[]?`~"
     String(Array.init length (fun _ -> chars.[random.Next(chars.Length)]))
 
-// Генерация списка случайных строк
+// случайный список строк
 let generateRandomStrings (count: int) (length: int) =
     Seq.init count (fun _ -> generateRandomString length) |> List.ofSeq
 
-// Ввод строк вручную
+// ввод строк вручную
 let inputStringsManually (count: int) =
     Seq.init count (fun i ->
         printfn "Введите строку #%d:" (i + 1)
@@ -42,7 +42,7 @@ let generateRandomChar () =
     let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+:'№,.;<>{}|/[]?`~"
     chars.[random.Next(chars.Length)]
 
-// Запрос способа ввода строк
+// запрос способа ввода строк
 let requestInputMethod () =
     let rec loop () =
         printfn "Как ввести строки? 1 - вручную, 2 - случайно:"
@@ -55,7 +55,7 @@ let requestInputMethod () =
             loop ()
     loop ()
 
-// Запрос способа ввода символа
+// запрос способа ввода символа
 let requestCharInputMethod () =
     let rec loop () =
         printfn "Как ввести символ? 1 - вручную, 2 - случайно:"
@@ -68,34 +68,34 @@ let requestCharInputMethod () =
             loop ()
     loop ()
 
-// Задание 1
+// задание 1
 let z1 () =
     let inputMethod = requestInputMethod ()
 
     let strings =
         match inputMethod with
         | "1" ->
-            // Ввод вручную
+            // ввод вручную
             let count = checkInt "Введите количество строк: " |> Option.get
             inputStringsManually count
         | "2" ->
-            // Случайным образом
+            // случайным образом
             let count = checkInt "Введите количество строк: " |> Option.get
             let length = checkInt "Введите длину каждой строки: " |> Option.get
             generateRandomStrings count length
         | _ -> failwith "Не должно достигаться (проверка уже выполнена)"
 
-    // Вывод строк
+    // вывод строк
     printfn "Введенные строки:"
     strings |> List.iter (printfn "%s")
 
-    // Ввод символа
+    // ввод символа
     let charInputMethod = requestCharInputMethod ()
 
     let charToAdd =
         match charInputMethod with
         | "1" ->
-            // Ввод символа вручную
+            // ввод символа вручную
             let rec getValidChar () =
                 printfn "Введите символ для добавления:"
                 let input = Console.ReadLine()
@@ -105,19 +105,19 @@ let z1 () =
                     getValidChar ()
             getValidChar ()
         | "2" ->
-            // Генерация случайного символа
+            // генерация случайного символа
             generateRandomChar ()
         | _ -> failwith "Не должно достигаться (проверка уже выполнена)"
 
-    // Добавление символа к строкам
+    // добавление символа к строкам
     let resultStrings = addCharToSeq charToAdd strings
 
-    // Вывод результата
+    // вывод результата
     printfn "Строки после добавления символа:"
     resultStrings |> List.iter (printfn "%s")
     ()
 
-// Задание 2
+// задание 2
 let z2 () =
     let count = checkInt "Введите количество строк: " |> Option.get
     let strings = inputStringsManually count
@@ -125,24 +125,25 @@ let z2 () =
     printfn "Введенные строки:"
     strings |> List.iter (printfn "%s")
 
-    // Проверка, если все строки пустые
+    // если все строки пустые
     if strings |> List.forall (fun str -> str = "") then
         printfn "Все строки пустые."
     else
-        // Поиск самой короткой строки
+        // поиск самой короткой строки
         let shortestString =
             strings
             |> List.fold (fun shortest str ->
                 if String.length str < String.length shortest then str else shortest) strings.[0]
 
-        // Вывод результата
+        // вывод результата
         if shortestString = "" then
             printfn "Самая короткая строка: (пустая строка)"
         else
             printfn "Самая короткая строка: %s" shortestString
     ()
 
-// Задание 3
+
+// задание 3
 let z3 () =
     printfn "Введите путь к каталогу:"
     let path = Console.ReadLine()
@@ -151,22 +152,21 @@ let z3 () =
         printfn "Ошибка: Каталог '%s' не существует." path
     else
         try
-            let files = Directory.GetFiles(path)
+            let files = Directory.GetFiles(path) |> Seq.ofArray
             let sortedFiles = 
                 files 
-                |> Array.map Path.GetFileName
-                |> Array.sortBy (fun name -> name.ToLower()) 
+                |> Seq.map Path.GetFileName
+                |> Seq.sortBy (fun name -> name.ToLower()) 
             
-            match sortedFiles with
-            | [||] -> printfn "В каталоге нет файлов."
-            | arr -> 
-                let lastFile = arr.[arr.Length - 1]
-                printfn "Последний файл по алфавиту: %s" lastFile
+            match Seq.tryLast sortedFiles with
+            | Some lastFile -> printfn "Последний файл по алфавиту: %s" lastFile
+            | None -> printfn "В каталоге нет файлов."
         with
         | ex ->
             printfn "Произошла ошибка: %s" ex.Message
 
-// Основная функция
+
+// основная функция
 let main () =
     let rec loop () =
         printfn "Введите номер программы для проверки: "
