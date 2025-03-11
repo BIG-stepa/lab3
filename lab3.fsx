@@ -68,80 +68,89 @@ let requestCharInputMethod () =
             loop ()
     loop ()
 
-// задание 1
+// задание 1 
 let z1 () =
     let inputMethod = requestInputMethod ()
 
-    let strings =
-        match inputMethod with
-        | "1" ->
-            // ввод вручную
-            let count = checkInt "Введите количество строк: " |> Option.get
-            inputStringsManually count
-        | "2" ->
-            // случайным образом
-            let count = checkInt "Введите количество строк: " |> Option.get
-            let length = checkInt "Введите длину каждой строки: " |> Option.get
-            generateRandomStrings count length
-        | _ -> failwith "Не должно достигаться (проверка уже выполнена)"
+    // Отложенное вычисление строк
+    let lazyStrings =
+        lazy (
+            match inputMethod with
+            | "1" ->
+                // ввод вручную
+                let count = checkInt "Введите количество строк: " |> Option.get
+                inputStringsManually count
+            | "2" ->
+                // случайным образом
+                let count = checkInt "Введите количество строк: " |> Option.get
+                let length = checkInt "Введите длину каждой строки: " |> Option.get
+                generateRandomStrings count length
+            | _ -> failwith "Не должно достигаться (проверка уже выполнена)"
+        )
 
     // вывод строк
     printfn "Введенные строки:"
-    strings |> List.iter (printfn "%s")
+    lazyStrings.Value |> List.iter (printfn "%s")
 
-    // ввод символа
-    let charInputMethod = requestCharInputMethod ()
-
-    let charToAdd =
-        match charInputMethod with
-        | "1" ->
-            // ввод символа вручную
-            let rec getValidChar () =
-                printfn "Введите символ для добавления:"
-                let input = Console.ReadLine()
-                if input.Length = 1 then input.[0]
-                else
-                    printfn "Ошибка: необходимо ввести ровно один символ."
-                    getValidChar ()
-            getValidChar ()
-        | "2" ->
-            // генерация случайного символа
-            generateRandomChar ()
-        | _ -> failwith "Не должно достигаться (проверка уже выполнена)"
+    // Отложенное вычисление символа
+    let lazyChar =
+        lazy (
+            let charInputMethod = requestCharInputMethod ()
+            match charInputMethod with
+            | "1" ->
+                // ввод символа вручную
+                let rec getValidChar () =
+                    printfn "Введите символ для добавления:"
+                    let input = Console.ReadLine()
+                    if input.Length = 1 then input.[0]
+                    else
+                        printfn "Ошибка: необходимо ввести ровно один символ."
+                        getValidChar ()
+                getValidChar ()
+            | "2" ->
+                // генерация случайного символа
+                generateRandomChar ()
+            | _ -> failwith "Не должно достигаться (проверка уже выполнена)"
+        )
 
     // добавление символа к строкам
-    let resultStrings = addCharToSeq charToAdd strings
+    let resultStrings = addCharToSeq lazyChar.Value lazyStrings.Value
 
     // вывод результата
     printfn "Строки после добавления символа:"
     resultStrings |> List.iter (printfn "%s")
     ()
 
-// задание 2
+// задание 2 с отложенными вычислениями
 let z2 () =
     let count = checkInt "Введите количество строк: " |> Option.get
-    let strings = inputStringsManually count
+
+    // Отложенное вычисление строк
+    let lazyStrings =
+        lazy (
+            inputStringsManually count
+        )
 
     printfn "Введенные строки:"
-    strings |> List.iter (printfn "%s")
+    lazyStrings.Value |> List.iter (printfn "%s")
 
-    // если все строки пустые
-    if strings |> List.forall (fun str -> str = "") then
-        printfn "Все строки пустые."
+    // Отложенное вычисление самой короткой строки
+    let lazyShortestString =
+        lazy (
+            if lazyStrings.Value |> List.forall (fun str -> str = "") then
+                "(пустая строка)"
+            else
+                lazyStrings.Value
+                |> List.fold (fun shortest str ->
+                    if String.length str < String.length shortest then str else shortest) lazyStrings.Value.[0]
+        )
+
+    // вывод результата
+    if lazyShortestString.Value = "(пустая строка)" then
+        printfn "Самая короткая строка: %s" lazyShortestString.Value
     else
-        // поиск самой короткой строки
-        let shortestString =
-            strings
-            |> List.fold (fun shortest str ->
-                if String.length str < String.length shortest then str else shortest) strings.[0]
-
-        // вывод результата
-        if shortestString = "" then
-            printfn "Самая короткая строка: (пустая строка)"
-        else
-            printfn "Самая короткая строка: %s" shortestString
+        printfn "Самая короткая строка: %s" lazyShortestString.Value
     ()
-
 
 // задание 3
 let z3 () =
